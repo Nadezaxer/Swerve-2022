@@ -88,6 +88,14 @@ public class Drivetrain implements Subsystem, UpdateManager.Updatable {
     // mGyro.reset();
     // }
 
+    /**
+     * 
+     * @return Heading in Radians
+     */
+    public double GetHeading() {
+        return mOdometry.getPoseMeters().getRotation().getRadians();
+    }
+
     // -------------------------------------------------------------------------------------------//
     /* PRIVATE METHODS */
     // -------------------------------------------------------------------------------------------//
