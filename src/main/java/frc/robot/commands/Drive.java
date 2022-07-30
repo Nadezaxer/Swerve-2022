@@ -1,21 +1,18 @@
 package frc.robot.commands;
 
-import java.util.function.DoubleSupplier;
-
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandBase;
+import frc.robot.Constants.DRIVER;
 import frc.robot.Constants.DRIVETRAIN;
 import frc.robot.subsystems.Drivetrain;
 
 public class Drive extends CommandBase {
     private Drivetrain mDrivetrain;
-    private DoubleSupplier mXSpeed;
-    private DoubleSupplier mYSpeed;
-    private DoubleSupplier mCommandHedeading;
-    private DoubleSupplier mTurnSpeed;
     private boolean mFieldOriented;
 
     /** Seconds */
@@ -24,32 +21,65 @@ public class Drive extends CommandBase {
 
     private PIDController mTurnPID;
 
-    
+    private final SlewRateLimiter mForwardSpeedLimiter = new SlewRateLimiter(DRIVER.DRIVE_SLEW_RATE_LIMITER);
+    private final SlewRateLimiter mStafeSpeedLimiter = new SlewRateLimiter(DRIVER.DRIVE_SLEW_RATE_LIMITER);
+    private double mHeading = 0.0;
 
-    public Drive ( Drivetrain drivetrain, DoubleSupplier xSpeed, DoubleSupplier ySpeed, DoubleSupplier commandedHeading, DoubleSupplier turnSpeed, boolean fieldOriented ) {
+    private XboxController mDriver;
+
+    private double applyDeadband(double value, double deadband) {
+        if (Math.abs(value) > deadband) {
+            if (value > 0.0) {
+                return (value - deadband) / (1.0 - deadband);
+            } else {
+                return (value + deadband) / (1.0 - deadband);
+            }
+        } else {
+            return 0.0;
+        }
+    }
+
+    private double GetCommandedHeading() {
+        double curentInput = Math.atan(mDriver.getRightY() / mDriver.getRightX());
+        double magnitude = Math.sqrt(Math.pow(mDriver.getRightY(), 2) + Math.pow(mDriver.getRightX(), 2));
+        if (magnitude > DRIVER.TURN_JOYSTICK_DEADBAND) {
+            mHeading = curentInput;
+            return curentInput;
+        } else
+            return mHeading;
+    }
+
+    private double GetTurnSpeed() {
+        double magnitude = Math.sqrt(Math.pow(mDriver.getRightY(), 2) + Math.pow(mDriver.getRightX(), 2));
+        if (magnitude > DRIVER.TURN_JOYSTICK_DEADBAND)
+            return magnitude;
+        else
+            return DRIVER.TURN_JOYSTICK_DEADBAND;
+    }
+
+    public Drive(Drivetrain drivetrain, XboxController driver, boolean fieldOriented) {
         mDrivetrain = drivetrain;
-        mXSpeed = xSpeed;
-        mYSpeed = ySpeed;
-        mCommandHedeading = commandedHeading;
-        mTurnSpeed = turnSpeed;
         mFieldOriented = fieldOriented;
+        mDriver = driver;
 
         prevTime = RobotController.getFPGATime() * 1e6;
         prevValue = mDrivetrain.GetHeading();
 
         mTurnPID = new PIDController(DRIVETRAIN.HEADING_P_GAIN, DRIVETRAIN.HEADING_I_GAIN, DRIVETRAIN.HEADING_D_GAIN);
 
-        addRequirements( mDrivetrain );
+        addRequirements(mDrivetrain);
 
         SmartDashboard.putBoolean("Field Orientated", fieldOriented);
     }
 
     @Override
     public void execute() {
-        double xSpeed = mXSpeed.getAsDouble();
-        double ySpeed = mYSpeed.getAsDouble();
-        double heading = mCommandHedeading.getAsDouble();
-        double roatationSpeed = mCommandHedeading.getAsDouble();
+        double xSpeed = mForwardSpeedLimiter.calculate(applyDeadband(-mDriver.getLeftY(), DRIVER.JOYSTICK_DEADBAND))
+                * DRIVER.MAX_DRIVE_VELOCITY;
+        double ySpeed = -mStafeSpeedLimiter.calculate(applyDeadband(mDriver.getLeftX(), DRIVER.JOYSTICK_DEADBAND))
+                * DRIVER.MAX_DRIVE_VELOCITY;
+        double heading = GetCommandedHeading();
+        double roatationSpeed = GetTurnSpeed();
 
         mFieldOriented = SmartDashboard.getBoolean("Field Orientated", mFieldOriented);
 
@@ -60,18 +90,18 @@ public class Drive extends CommandBase {
 
         double now = RobotController.getFPGATime() * 1e6;
         double delta = now - prevTime;
-        
-        double turnRateLimit = mTurnSpeed.getAsDouble() * delta;
-        double TargetHeading = prevValue + MathUtil.clamp(mCommandHedeading.getAsDouble() - prevValue, -turnRateLimit, turnRateLimit);
-        
+
+        double turnRateLimit = roatationSpeed * delta;
+        double TargetHeading = prevValue + MathUtil.clamp(heading - prevValue, -turnRateLimit, turnRateLimit);
+
         double roationSpeed = mTurnPID.calculate(mDrivetrain.GetHeading(), TargetHeading);
 
-        mDrivetrain.Drive( xSpeed, ySpeed, roationSpeed, mFieldOriented );
+        mDrivetrain.Drive(xSpeed, ySpeed, roationSpeed, mFieldOriented);
     }
 
     @Override
-    public void end( boolean interrupted ) {
-        mDrivetrain.Drive( 0, 0, 0, false );
+    public void end(boolean interrupted) {
+        mDrivetrain.Drive(0, 0, 0, false);
     }
 
 }
