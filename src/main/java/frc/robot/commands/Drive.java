@@ -40,7 +40,7 @@ public class Drive extends CommandBase {
     }
 
     private double GetCommandedHeading() {
-        double curentInput = Math.atan(mDriver.getRightY() / mDriver.getRightX());
+        double curentInput = -Math.atan2(mDriver.getRightY() , mDriver.getRightX()) - Math.PI / 2;
         double magnitude = Math.sqrt(Math.pow(mDriver.getRightY(), 2) + Math.pow(mDriver.getRightX(), 2));
         if (magnitude > DRIVER.TURN_JOYSTICK_DEADBAND) {
             mHeading = curentInput;
@@ -94,7 +94,24 @@ public class Drive extends CommandBase {
         double turnRateLimit = roatationSpeed * delta;
         double TargetHeading = prevValue + MathUtil.clamp(heading - prevValue, -turnRateLimit, turnRateLimit);
 
-        double roationSpeed = mTurnPID.calculate(mDrivetrain.GetHeading(), TargetHeading);
+        
+        double error = mDrivetrain.GetHeading() - heading;
+
+        if (error > Math.PI) {
+            error -= 2 * Math.PI;
+        }
+        if (error < -Math.PI) {
+            error += 2 * Math.PI;
+        }
+
+        SmartDashboard.putNumber("Error", error);
+
+        double roationSpeed = mTurnPID.calculate(error, 0);
+
+        roationSpeed = MathUtil.clamp(roationSpeed, -DRIVER.MAX_ROTATION_VELOCITY, DRIVER.MAX_ROTATION_VELOCITY);
+
+        SmartDashboard.putNumber("Commanded Roatation Speed", roationSpeed);
+
 
         mDrivetrain.Drive(xSpeed, ySpeed, roationSpeed, mFieldOriented);
     }

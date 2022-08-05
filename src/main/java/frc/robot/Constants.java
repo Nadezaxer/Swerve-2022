@@ -83,7 +83,7 @@ public final class Constants {
             new Translation2d( -Units.inchesToMeters( WHEEL_BASE_INCH ) / 2,
                                -Units.inchesToMeters( TRACK_WIDTH_INCH ) / 2 );
 
-        public static final double HEADING_P_GAIN = 0.0;
+        public static final double HEADING_P_GAIN = 10.0;
         public static final double HEADING_I_GAIN = 0.0;
         public static final double HEADING_D_GAIN = 0.0;
 
@@ -95,10 +95,10 @@ public final class Constants {
      */
     public static final class DRIVER {
         public static final double MAX_DRIVE_VELOCITY = 8;                // The maximum drive velocity
-        public static final double MAX_ROTATION_VELOCITY = 5 * Math.PI;              // The maximum drive rotation velocity
-        public static final double JOYSTICK_DEADBAND = 0.02;                    // The joystick deadband
+        public static final double MAX_ROTATION_VELOCITY = 3 * Math.PI;              // The maximum drive rotation velocity
+        public static final double JOYSTICK_DEADBAND = 0.03;                    // The joystick deadband
         public static final int DRIVE_SLEW_RATE_LIMITER = 3;                    // The units per second max change
-        public static final double TURN_JOYSTICK_DEADBAND = 0.1;
+        public static final double TURN_JOYSTICK_DEADBAND = 0.2;
     }
 
 
