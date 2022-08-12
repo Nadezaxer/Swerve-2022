@@ -15,16 +15,12 @@ public class Drive extends CommandBase {
     private Drivetrain mDrivetrain;
     private boolean mFieldOriented;
 
-    /** Seconds */
     private double prevTime;
-    private double prevValue;
-
     private PIDController mTurnPID;
 
     private final SlewRateLimiter mForwardSpeedLimiter = new SlewRateLimiter(DRIVER.DRIVE_SLEW_RATE_LIMITER);
     private final SlewRateLimiter mStafeSpeedLimiter = new SlewRateLimiter(DRIVER.DRIVE_SLEW_RATE_LIMITER);
-    private double mHeading = 0.0;
-
+    private double mTargetHeading;
     private XboxController mDriver;
 
     private double applyDeadband(double value, double deadband) {
@@ -39,31 +35,13 @@ public class Drive extends CommandBase {
         }
     }
 
-    private double GetCommandedHeading() {
-        double curentInput = -Math.atan2(mDriver.getRightY() , mDriver.getRightX()) - Math.PI / 2;
-        double magnitude = Math.sqrt(Math.pow(mDriver.getRightY(), 2) + Math.pow(mDriver.getRightX(), 2));
-        if (magnitude > DRIVER.TURN_JOYSTICK_DEADBAND) {
-            mHeading = curentInput;
-            return curentInput;
-        } else
-            return mHeading;
-    }
-
-    private double GetTurnSpeed() {
-        double magnitude = Math.sqrt(Math.pow(mDriver.getRightY(), 2) + Math.pow(mDriver.getRightX(), 2));
-        if (magnitude > DRIVER.TURN_JOYSTICK_DEADBAND)
-            return magnitude;
-        else
-            return DRIVER.TURN_JOYSTICK_DEADBAND;
-    }
-
     public Drive(Drivetrain drivetrain, XboxController driver, boolean fieldOriented) {
         mDrivetrain = drivetrain;
         mFieldOriented = fieldOriented;
         mDriver = driver;
 
-        prevTime = RobotController.getFPGATime() * 1e6;
-        prevValue = mDrivetrain.GetHeading();
+        prevTime = RobotController.getFPGATime() / 1e6;
+        mTargetHeading = mDrivetrain.GetHeading();
 
         mTurnPID = new PIDController(DRIVETRAIN.HEADING_P_GAIN, DRIVETRAIN.HEADING_I_GAIN, DRIVETRAIN.HEADING_D_GAIN);
 
@@ -78,24 +56,34 @@ public class Drive extends CommandBase {
                 * DRIVER.MAX_DRIVE_VELOCITY;
         double ySpeed = -mStafeSpeedLimiter.calculate(applyDeadband(mDriver.getLeftX(), DRIVER.JOYSTICK_DEADBAND))
                 * DRIVER.MAX_DRIVE_VELOCITY;
-        double heading = GetCommandedHeading();
-        double roatationSpeed = GetTurnSpeed();
+        double roatationSpeed = applyDeadband(mDriver.getRightX(), DRIVER.JOYSTICK_DEADBAND) * DRIVER.MAX_ROTATION_VELOCITY;
 
         mFieldOriented = SmartDashboard.getBoolean("Field Orientated", mFieldOriented);
 
+        double now = RobotController.getFPGATime() / 1e6;
+        double delta_sec = now - prevTime;
+
+        prevTime = now;
+
+        mTargetHeading += roatationSpeed * delta_sec;
+
+        if (mTargetHeading > Math.PI) {
+            mTargetHeading -= 2 * Math.PI;
+        }
+        if (mTargetHeading < -Math.PI) {
+            mTargetHeading += 2 * Math.PI;
+        }
+
         SmartDashboard.putNumber("X", xSpeed);
         SmartDashboard.putNumber("Y", ySpeed);
-        SmartDashboard.putNumber("Heading", heading);
+        SmartDashboard.putNumber("Target Heading", mTargetHeading);
         SmartDashboard.putNumber("Roatation Speed", roatationSpeed);
-
-        double now = RobotController.getFPGATime() * 1e6;
-        double delta = now - prevTime;
-
-        double turnRateLimit = roatationSpeed * delta;
-        double TargetHeading = prevValue + MathUtil.clamp(heading - prevValue, -turnRateLimit, turnRateLimit);
-
+        SmartDashboard.putNumber("Time Delta", delta_sec);
+        SmartDashboard.putNumber("Drivetrain Heading", mDrivetrain.GetHeading());
         
-        double error = mDrivetrain.GetHeading() - heading;
+        double error = mDrivetrain.GetHeading() - mTargetHeading;
+
+
 
         if (error > Math.PI) {
             error -= 2 * Math.PI;
@@ -108,7 +96,9 @@ public class Drive extends CommandBase {
 
         double roationSpeed = mTurnPID.calculate(error, 0);
 
-        roationSpeed = MathUtil.clamp(roationSpeed, -DRIVER.MAX_ROTATION_VELOCITY, DRIVER.MAX_ROTATION_VELOCITY);
+        roationSpeed = MathUtil.clamp(roationSpeed, -DRIVETRAIN.MAX_TURN_SPEED, DRIVETRAIN.MAX_TURN_SPEED);
+
+        roatationSpeed = applyDeadband(roatationSpeed, 0.05);
 
         SmartDashboard.putNumber("Commanded Roatation Speed", roationSpeed);
 

@@ -249,31 +249,29 @@ public class Drivetrain implements Subsystem, UpdateManager.Updatable {
             double absolutePosition = mModules[i].GetTurnAbsolutePosition();
             double home = zero - absolutePosition;
             double margin = Math.PI / 2;
-            if (zero >= margin && zero <= 2 * Math.PI - margin) {
-                if (!((absolutePosition >= zero - margin) &&
-                        (absolutePosition <= zero + margin))) {
-                    DriverStation.reportError("Cannot zero modules: module " + i + " distance to home " +
-                            Units.radiansToDegrees(home), false);
-                } else {
-                    mHomes[i] = home;
-                }
-            } else if (zero < margin) {
-                if (!((absolutePosition > zero + 2.0 * Math.PI - margin) ||
-                        (absolutePosition < zero + margin))) {
-                    DriverStation.reportError("Cannot zero modules: module " + i + "distance to home " +
-                            Units.radiansToDegrees(home), false);
-                } else {
-                    mHomes[i] = home;
-                }
-            } else {
-                if (!((absolutePosition > zero - margin) ||
-                        (absolutePosition < zero + margin - 2.0 * Math.PI))) {
-                    DriverStation.reportError("Cannot zero modules: module " + i + "distance to home " +
-                            Units.radiansToDegrees(home), false);
-                } else {
-                    mHomes[i] = home;
-                }
-            }
+            mHomes[i] = home;
+
+            // if (zero >= margin && zero <= 2 * Math.PI - margin) {
+            //     if ((absolutePosition >= zero - margin) && (absolutePosition <= zero + margin)) {
+            //         mHomes[i] = home;
+            //     } else {
+            //         DriverStation.reportError("Cannot zero modules: module " + i + " distance to home " +
+            //                 Units.radiansToDegrees(home), false);
+            //     }
+            // } else if (zero < margin) {
+            //     if ((absolutePosition > zero + 2.0 * Math.PI - margin) || (absolutePosition < zero + margin)) {
+            //         mHomes[i] = home;
+            //     } else {
+            //         DriverStation.reportError("Cannot zero modules: module " + i + "distance to home " +
+            //                 Units.radiansToDegrees(home), false);
+            //     }
+            // } else {
+            //     if ((absolutePosition > zero - margin) || (absolutePosition < zero + margin - 2.0 * Math.PI)) {
+            //     } else {
+            //         DriverStation.reportError("Cannot zero modules: module " + i + "distance to home " +
+            //                 Units.radiansToDegrees(home), false);
+            //     }
+            // }
         }
     }
 
@@ -335,7 +333,7 @@ public class Drivetrain implements Subsystem, UpdateManager.Updatable {
         switch (currentState) {
             case Homing:
                 for (int i = 0; i < mModules.length; i++) {
-                    mModules[i].SetState(new SwerveModuleState(0.0, new Rotation2d(mHomes[i])));
+                    mModules[i].SetState(new SwerveModuleState(0.0, new Rotation2d(mHomes[i])), true);
                 }
                 boolean everyoneAtGoal = true;
                 for (int i = 0; i < mModules.length; i++) {

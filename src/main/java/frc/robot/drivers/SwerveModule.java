@@ -169,10 +169,19 @@ public class SwerveModule {
      * and heading in radians).
      * @param desiredState the desired state of the swerve module
      */
-    public void SetState ( SwerveModuleState DesiredState ) {
+    public void SetState( SwerveModuleState DesiredState ) {
+        SetState(DesiredState, false);
+    }
+    public void SetState ( SwerveModuleState DesiredState, Boolean homeing ) {
 
-        SwerveModuleState state = SwerveModuleState.optimize( DesiredState,
-            new Rotation2d( GetTurnDistance() ) );
+        SwerveModuleState state;
+
+        if (homeing) {
+            state = DesiredState;
+        } else {
+            state = SwerveModuleState.optimize( DesiredState,
+                new Rotation2d( GetTurnDistance() ) );
+        }
 
         SetDriveTarget( state.speedMetersPerSecond );            
         SetTurnTarget( state.angle.getRadians() );
