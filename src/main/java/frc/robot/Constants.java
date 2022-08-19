@@ -83,11 +83,14 @@ public final class Constants {
             new Translation2d( -Units.inchesToMeters( WHEEL_BASE_INCH ) / 2,
                                -Units.inchesToMeters( TRACK_WIDTH_INCH ) / 2 );
 
+
+        // Turning Profiled PID vars
         public static final double HEADING_P_GAIN = 20.0;
         public static final double HEADING_I_GAIN = 0.0;
         public static final double HEADING_D_GAIN = 0.0;
 
         public static final double MAX_TURN_SPEED = 20;
+        public static final double MAX_TURN_ACCELERATION = 20;
 
     }
 
@@ -105,6 +108,12 @@ public final class Constants {
 
     public static final class CONTROL {
         public static final double LOOP_TIME_S = 0.005;                         // The update manager loop time
+    }
+
+    public static final class PathFollowing {
+        public static final double TRANSLATION_P_GAIN = 5.0;
+        public static final double TRANSLATION_I_GAIN = 0.0;
+        public static final double TRANSLATION_D_GAIN = 0.0;
     }
 
 

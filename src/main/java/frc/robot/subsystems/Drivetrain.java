@@ -84,6 +84,22 @@ public class Drivetrain implements Subsystem, UpdateManager.Updatable {
         SetDriveSignal(new SwerveDriveSignal(xSpeed, ySpeed, rotation, fieldOriented));
     }
 
+    public synchronized Pose2d GetPose() {
+        return mOdometry.getPoseMeters();
+    }
+
+    public SwerveDriveKinematics getKinematics() {
+        return mDriveKinematics;
+    }
+
+    public void SetSwerveModuleStates(SwerveModuleState[] swerveModuleStates) {
+        SwerveDriveKinematics.desaturateWheelSpeeds(swerveModuleStates, DRIVETRAIN.MAX_DRIVE_VELOCITY_MPS);
+
+        for (int i = 0; i < mModules.length; i++) {
+            mModules[i].SetState(swerveModuleStates[i]);
+        }
+    }
+
     // public void ResetHeading () {
     // mGyro.reset();
     // }
@@ -114,10 +130,6 @@ public class Drivetrain implements Subsystem, UpdateManager.Updatable {
 
     private synchronized void SetDriveSignal(SwerveDriveSignal driveSignal) {
         mDriveSignal = driveSignal;
-    }
-
-    private synchronized Pose2d GetPose() {
-        return mOdometry.getPoseMeters();
     }
 
     private Rotation2d GetGyroHeading() {
@@ -250,28 +262,6 @@ public class Drivetrain implements Subsystem, UpdateManager.Updatable {
             double home = zero - absolutePosition;
             double margin = Math.PI / 2;
             mHomes[i] = home;
-
-            // if (zero >= margin && zero <= 2 * Math.PI - margin) {
-            //     if ((absolutePosition >= zero - margin) && (absolutePosition <= zero + margin)) {
-            //         mHomes[i] = home;
-            //     } else {
-            //         DriverStation.reportError("Cannot zero modules: module " + i + " distance to home " +
-            //                 Units.radiansToDegrees(home), false);
-            //     }
-            // } else if (zero < margin) {
-            //     if ((absolutePosition > zero + 2.0 * Math.PI - margin) || (absolutePosition < zero + margin)) {
-            //         mHomes[i] = home;
-            //     } else {
-            //         DriverStation.reportError("Cannot zero modules: module " + i + "distance to home " +
-            //                 Units.radiansToDegrees(home), false);
-            //     }
-            // } else {
-            //     if ((absolutePosition > zero - margin) || (absolutePosition < zero + margin - 2.0 * Math.PI)) {
-            //     } else {
-            //         DriverStation.reportError("Cannot zero modules: module " + i + "distance to home " +
-            //                 Units.radiansToDegrees(home), false);
-            //     }
-            // }
         }
     }
 
