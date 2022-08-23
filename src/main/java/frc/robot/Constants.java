@@ -61,13 +61,13 @@ public final class Constants {
         public static final double DRIVE_D_GAIN = 0.0;                          // The D-gain of the PID driving controller
         public static final double MAX_TURN_VELOCITY_RPS = 20*Math.PI;          // The maximum angular velocity - used for constraining trajectory profile
         public static final double MAX_TURN_ACCELERATION_RPSS = 20*Math.PI;     // The maximum angular acceleration - used for constraining trajectory profile
-        public static final double MAX_DRIVE_VELOCITY_MPS = 10;                // The maximum drive velocity
+        public static final double MAX_DRIVE_VELOCITY_MPS = 10.0;                // The maximum drive velocity
 
         // And these should be checked before every match.
-        public static final double FRONT_LEFT_ZERO_RAD = 3.64;                  // The PWM encoder angle for zero'ing the wheel
-        public static final double FRONT_RIGHT_ZERO_RAD = 1.51;                 // The PWM encoder angle for zero'ing the wheel
-        public static final double REAR_LEFT_ZERO_RAD = 4.92;            // The PWM encoder angle for zero'ing the wheel
-        public static final double REAR_RIGHT_ZERO_RAD = 4.05;           // The PWM encoder angle for zero'ing the wheel
+        public static final double FRONT_LEFT_ZERO_RAD = 3.72;                  // The PWM encoder angle for zero'ing the wheel
+        public static final double FRONT_RIGHT_ZERO_RAD = 1.55;                 // The PWM encoder angle for zero'ing the wheel
+        public static final double REAR_LEFT_ZERO_RAD = 4.89;            // The PWM encoder angle for zero'ing the wheel
+        public static final double REAR_RIGHT_ZERO_RAD = 4.66;           // The PWM encoder angle for zero'ing the wheel
 
         // Constants based on the above calibrations
         public static final Translation2d FRONT_LEFT_LOCATION =                 // Position relative to the robot center
@@ -90,7 +90,7 @@ public final class Constants {
         public static final double HEADING_D_GAIN = 0.0;
 
         public static final double MAX_TURN_SPEED = 20;
-        public static final double MAX_TURN_ACCELERATION = 20;
+        public static final double MAX_TURN_ACCELERATION = 40.0;
 
     }
 

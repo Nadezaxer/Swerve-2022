@@ -31,7 +31,7 @@ public class RobotContainer {
 
 
         SmartDashboard.putData(mChooser);
-        mChooser.addOption("Test Path", FollowPath.GeneratePathFollowingCommand("TestPath", mDrivetrainSubsystem));
+        mChooser.setDefaultOption("Test Path", FollowPath.GeneratePathFollowingCommand("TestPath", mDrivetrainSubsystem));
     }
 
 

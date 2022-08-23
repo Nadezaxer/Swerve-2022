@@ -1,7 +1,5 @@
 package frc.robot.commands;
 
-import java.nio.file.Path;
-
 import com.pathplanner.lib.PathPlanner;
 import com.pathplanner.lib.PathPlannerTrajectory;
 import com.pathplanner.lib.commands.PPSwerveControllerCommand;
@@ -25,6 +23,6 @@ public class FollowPath {
     }
 
     public static Command GeneratePathFollowingCommand( String name, Drivetrain drivetrain) {
-        return GeneratePathFollowingCommand(PathPlanner.loadPath(name, 1.0, 1.0), drivetrain);
+        return GeneratePathFollowingCommand(PathPlanner.loadPath(name, 0.5, 0.5), drivetrain);
     }
 }
