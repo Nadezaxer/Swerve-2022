@@ -7,6 +7,7 @@ import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandBase;
+import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import frc.robot.Constants.DRIVER;
 import frc.robot.Constants.DRIVETRAIN;
 import frc.robot.subsystems.Drivetrain;
@@ -40,14 +41,30 @@ public class Drive extends CommandBase {
         mFieldOriented = fieldOriented;
         mDriver = driver;
 
-        prevTime = RobotController.getFPGATime() / 1e6;
-        mTargetHeading = mDrivetrain.GetHeading();
-
         mTurnPID = new PIDController(DRIVETRAIN.HEADING_P_GAIN, DRIVETRAIN.HEADING_I_GAIN, DRIVETRAIN.HEADING_D_GAIN);
 
         addRequirements(mDrivetrain);
 
         SmartDashboard.putBoolean("Field Orientated", fieldOriented);
+
+        JoystickButton driver_start = new JoystickButton(mDriver, XboxController.Button.kStart.value);
+        JoystickButton driver_back = new JoystickButton(mDriver, XboxController.Button.kBack.value);
+
+        driver_start.whenPressed(() -> {
+            mTargetHeading = 0;
+            mDrivetrain.resetHeading();
+        });
+        driver_back.whenPressed(() -> {
+            mFieldOriented = !mFieldOriented;
+            SmartDashboard.putBoolean("Field Orientated", mFieldOriented);
+        });
+
+    }
+
+    @Override
+    public void initialize() {
+        prevTime = RobotController.getFPGATime() / 1e6;
+        mTargetHeading = mDrivetrain.GetHeading();
     }
 
     @Override
@@ -56,7 +73,8 @@ public class Drive extends CommandBase {
                 * DRIVER.MAX_DRIVE_VELOCITY;
         double ySpeed = -mStafeSpeedLimiter.calculate(applyDeadband(mDriver.getLeftX(), DRIVER.JOYSTICK_DEADBAND))
                 * DRIVER.MAX_DRIVE_VELOCITY;
-        double roatationSpeed = applyDeadband(mDriver.getRightX(), DRIVER.JOYSTICK_DEADBAND) * DRIVER.MAX_ROTATION_VELOCITY;
+        double roatationSpeed = applyDeadband(mDriver.getRightX(), DRIVER.JOYSTICK_DEADBAND)
+                * DRIVER.MAX_ROTATION_VELOCITY;
 
         mFieldOriented = SmartDashboard.getBoolean("Field Orientated", mFieldOriented);
 
@@ -77,13 +95,9 @@ public class Drive extends CommandBase {
         SmartDashboard.putNumber("X", xSpeed);
         SmartDashboard.putNumber("Y", ySpeed);
         SmartDashboard.putNumber("Target Heading", mTargetHeading);
-        SmartDashboard.putNumber("Roatation Speed", roatationSpeed);
-        SmartDashboard.putNumber("Time Delta", delta_sec);
         SmartDashboard.putNumber("Drivetrain Heading", mDrivetrain.GetHeading());
-        
+
         double error = mDrivetrain.GetHeading() - mTargetHeading;
-
-
 
         if (error > Math.PI) {
             error -= 2 * Math.PI;
@@ -92,8 +106,6 @@ public class Drive extends CommandBase {
             error += 2 * Math.PI;
         }
 
-        SmartDashboard.putNumber("Error", error);
-
         double roationSpeed = mTurnPID.calculate(error, 0);
 
         roationSpeed = MathUtil.clamp(roationSpeed, -DRIVETRAIN.MAX_TURN_SPEED, DRIVETRAIN.MAX_TURN_SPEED);
@@ -101,7 +113,6 @@ public class Drive extends CommandBase {
         roatationSpeed = applyDeadband(roatationSpeed, 0.05);
 
         SmartDashboard.putNumber("Commanded Roatation Speed", roationSpeed);
-
 
         mDrivetrain.Drive(xSpeed, ySpeed, roationSpeed, mFieldOriented);
     }

@@ -89,7 +89,7 @@ public final class Constants {
         public static final double HEADING_I_GAIN = 0.0;
         public static final double HEADING_D_GAIN = 0.0;
 
-        public static final double MAX_TURN_SPEED = 20;
+        public static final double MAX_TURN_SPEED = 10.0;
         public static final double MAX_TURN_ACCELERATION = 40.0;
 
     }

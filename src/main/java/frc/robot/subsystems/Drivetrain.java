@@ -6,6 +6,7 @@ import edu.wpi.first.wpilibj.interfaces.Gyro;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
@@ -113,6 +114,19 @@ public class Drivetrain implements Subsystem, UpdateManager.Updatable {
      */
     public double GetHeading() {
         return mOdometry.getPoseMeters().getRotation().getRadians();
+    }
+
+    public synchronized void setPose(Pose2d pose) {
+        mGyro.calibrate();
+        mOdometry.resetPosition(pose, mGyro.getRotation2d());
+    }
+
+
+    public synchronized void resetHeading() {
+        mGyro.reset();
+        Translation2d currentTranslation = mOdometry.getPoseMeters().getTranslation();
+
+        mOdometry.resetPosition(new Pose2d(currentTranslation, new Rotation2d()), mGyro.getRotation2d());
     }
 
     // -------------------------------------------------------------------------------------------//
@@ -347,5 +361,7 @@ public class Drivetrain implements Subsystem, UpdateManager.Updatable {
         }
 
     }
+
+    
 
 }
