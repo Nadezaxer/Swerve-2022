@@ -6,11 +6,11 @@ import edu.wpi.first.wpilibj.interfaces.Gyro;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
@@ -18,7 +18,6 @@ import edu.wpi.first.wpilibj.shuffleboard.BuiltInLayouts;
 import frc.robot.Constants.DRIVETRAIN;
 import frc.robot.Constants.HARDWARE;
 import frc.robot.drivers.SwerveModule;
-import frc.robot.utils.SwerveDriveSignal;
 import frc.robot.UpdateManager;
 
 public class Drivetrain implements Subsystem, UpdateManager.Updatable {
@@ -55,7 +54,8 @@ public class Drivetrain implements Subsystem, UpdateManager.Updatable {
     private final SwerveDriveKinematics mDriveKinematics;
     private final SwerveDriveOdometry mOdometry;
     private final Gyro mGyro;
-    private SwerveDriveSignal mDriveSignal = new SwerveDriveSignal(0, 0, 0, false);
+    private SwerveModuleState[] mSwerveModuleStates = { new SwerveModuleState(), new SwerveModuleState(),
+            new SwerveModuleState(), new SwerveModuleState() };
     private double[] mHomes = new double[] { 0, 0, 0, 0 };
     private State_t mState = State_t.Homing;
     private State_t mNextState = State_t.Homing;
@@ -81,7 +81,27 @@ public class Drivetrain implements Subsystem, UpdateManager.Updatable {
      *                      the field or the robot.
      */
     public void Drive(double xSpeed, double ySpeed, double rotation, boolean fieldOriented) {
-        SetDriveSignal(new SwerveDriveSignal(xSpeed, ySpeed, rotation, fieldOriented));
+        SwerveModuleState[] swerveModuleStates;
+
+        if (fieldOriented) {
+            swerveModuleStates = mDriveKinematics.toSwerveModuleStates(
+                    ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed, rotation, GetGyroHeading()));
+        } else {
+            swerveModuleStates = mDriveKinematics.toSwerveModuleStates(new ChassisSpeeds(xSpeed, ySpeed, rotation));
+        }
+        SetSwerveModuleStates(swerveModuleStates);
+    }
+
+    public synchronized Pose2d GetPose() {
+        return mOdometry.getPoseMeters();
+    }
+
+    public SwerveDriveKinematics getKinematics() {
+        return mDriveKinematics;
+    }
+
+    public synchronized void SetSwerveModuleStates(SwerveModuleState[] swerveModuleStates) {
+        mSwerveModuleStates = swerveModuleStates;
     }
 
     // public void ResetHeading () {
@@ -96,9 +116,26 @@ public class Drivetrain implements Subsystem, UpdateManager.Updatable {
         return mOdometry.getPoseMeters().getRotation().getRadians();
     }
 
+    public synchronized void setPose(Pose2d pose) {
+        mGyro.calibrate();
+        mOdometry.resetPosition(pose, mGyro.getRotation2d());
+    }
+
+
+    public synchronized void resetHeading() {
+        mGyro.reset();
+        Translation2d currentTranslation = mOdometry.getPoseMeters().getTranslation();
+
+        mOdometry.resetPosition(new Pose2d(currentTranslation, new Rotation2d()), mGyro.getRotation2d());
+    }
+
     // -------------------------------------------------------------------------------------------//
     /* PRIVATE METHODS */
     // -------------------------------------------------------------------------------------------//
+
+    private synchronized SwerveModuleState[] getSwerveModuleStates() {
+        return mSwerveModuleStates;
+    }
 
     private synchronized State_t GetState() {
         return mState;
@@ -106,18 +143,6 @@ public class Drivetrain implements Subsystem, UpdateManager.Updatable {
 
     private synchronized void SetState(State_t state) {
         mState = state;
-    }
-
-    private synchronized SwerveDriveSignal GetDriveSignal() {
-        return mDriveSignal;
-    }
-
-    private synchronized void SetDriveSignal(SwerveDriveSignal driveSignal) {
-        mDriveSignal = driveSignal;
-    }
-
-    private synchronized Pose2d GetPose() {
-        return mOdometry.getPoseMeters();
     }
 
     private Rotation2d GetGyroHeading() {
@@ -133,29 +158,15 @@ public class Drivetrain implements Subsystem, UpdateManager.Updatable {
                 mModules[3].GetState());
     }
 
-    private void UpdateModules(SwerveDriveSignal driveSignal) {
-        SwerveModuleState[] swerveModuleStates;
-        if (driveSignal.GetIsFieldOriented()) {
-            swerveModuleStates = mDriveKinematics.toSwerveModuleStates(
-                    ChassisSpeeds.fromFieldRelativeSpeeds(driveSignal.GetXSpeed(),
-                            driveSignal.GetYSpeed(),
-                            driveSignal.GetRotation(),
-                            GetGyroHeading()));
-        } else {
-            // double speed = new ChassisSpeeds( driveSignal.GetXSpeed(),
-            // driveSignal.GetYSpeed(),
-            // driveSignal.GetRotation() );
-            swerveModuleStates = mDriveKinematics.toSwerveModuleStates(
-                    new ChassisSpeeds(driveSignal.GetXSpeed(),
-                            driveSignal.GetYSpeed(),
-                            driveSignal.GetRotation()));
-        }
+    private void UpdateModules(SwerveModuleState[] swerveModuleStates) {
 
         SwerveDriveKinematics.desaturateWheelSpeeds(swerveModuleStates, DRIVETRAIN.MAX_DRIVE_VELOCITY_MPS);
 
         for (int i = 0; i < mModules.length; i++) {
             mModules[i].SetState(swerveModuleStates[i]);
+            // System.out.print("Module " + i + ": " + swerveModuleStates[i].toString()+ ", ");
         }
+        System.out.println();
     }
 
     // -------------------------------------------------------------------------------------------//
@@ -248,30 +259,7 @@ public class Drivetrain implements Subsystem, UpdateManager.Updatable {
             double zero = mModules[i].GetHomePosition();
             double absolutePosition = mModules[i].GetTurnAbsolutePosition();
             double home = zero - absolutePosition;
-            double margin = Math.PI / 2;
             mHomes[i] = home;
-
-            // if (zero >= margin && zero <= 2 * Math.PI - margin) {
-            //     if ((absolutePosition >= zero - margin) && (absolutePosition <= zero + margin)) {
-            //         mHomes[i] = home;
-            //     } else {
-            //         DriverStation.reportError("Cannot zero modules: module " + i + " distance to home " +
-            //                 Units.radiansToDegrees(home), false);
-            //     }
-            // } else if (zero < margin) {
-            //     if ((absolutePosition > zero + 2.0 * Math.PI - margin) || (absolutePosition < zero + margin)) {
-            //         mHomes[i] = home;
-            //     } else {
-            //         DriverStation.reportError("Cannot zero modules: module " + i + "distance to home " +
-            //                 Units.radiansToDegrees(home), false);
-            //     }
-            // } else {
-            //     if ((absolutePosition > zero - margin) || (absolutePosition < zero + margin - 2.0 * Math.PI)) {
-            //     } else {
-            //         DriverStation.reportError("Cannot zero modules: module " + i + "distance to home " +
-            //                 Units.radiansToDegrees(home), false);
-            //     }
-            // }
         }
     }
 
@@ -352,7 +340,7 @@ public class Drivetrain implements Subsystem, UpdateManager.Updatable {
                 break;
 
             case Teleop:
-                UpdateModules(GetDriveSignal());
+                UpdateModules(getSwerveModuleStates());
                 // for ( int i = 0; i < mModules.length; i++ ) {
                 // mModules[i].SetNullOutput();
                 // }
@@ -373,5 +361,7 @@ public class Drivetrain implements Subsystem, UpdateManager.Updatable {
         }
 
     }
+
+    
 
 }
