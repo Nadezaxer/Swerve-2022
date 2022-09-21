@@ -64,10 +64,10 @@ public final class Constants {
         public static final double MAX_DRIVE_VELOCITY_MPS = 10.0;                // The maximum drive velocity
 
         // And these should be checked before every match.
-        public static final double FRONT_LEFT_ZERO_RAD = 3.72;                  // The PWM encoder angle for zero'ing the wheel
-        public static final double FRONT_RIGHT_ZERO_RAD = 1.55;                 // The PWM encoder angle for zero'ing the wheel
+        public static final double FRONT_LEFT_ZERO_RAD = 4.08;                  // The PWM encoder angle for zero'ing the wheel
+        public static final double FRONT_RIGHT_ZERO_RAD = 1.57;                 // The PWM encoder angle for zero'ing the wheel
         public static final double REAR_LEFT_ZERO_RAD = 4.89;            // The PWM encoder angle for zero'ing the wheel
-        public static final double REAR_RIGHT_ZERO_RAD = 4.66;           // The PWM encoder angle for zero'ing the wheel
+        public static final double REAR_RIGHT_ZERO_RAD = 1.80;           // The PWM encoder angle for zero'ing the wheel
 
         // Constants based on the above calibrations
         public static final Translation2d FRONT_LEFT_LOCATION =                 // Position relative to the robot center
@@ -101,7 +101,7 @@ public final class Constants {
     public static final class DRIVER {
         public static final double MAX_DRIVE_VELOCITY = 8;                // The maximum drive velocity
         public static final double MAX_ROTATION_VELOCITY = 1 * Math.PI;              // The maximum drive rotation velocity in rad / sec
-        public static final double JOYSTICK_DEADBAND = 0.03;                    // The joystick deadband
+        public static final double JOYSTICK_DEADBAND = 0.05;                    // The joystick deadband
         public static final int DRIVE_SLEW_RATE_LIMITER = 3;                    // The units per second max change
     }
 
