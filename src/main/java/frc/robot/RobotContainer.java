@@ -31,8 +31,9 @@ public class RobotContainer {
 
 
         SmartDashboard.putData(mChooser);
-        mChooser.setDefaultOption("Test Path", new FollowPath(Paths.TestPath, mDrivetrainSubsystem));
-        mChooser.setDefaultOption("Test Path 2", new FollowPath(Paths.TestPath2, mDrivetrainSubsystem));
+        mChooser.setDefaultOption("Auto", new FollowPath(Paths.Auto, mDrivetrainSubsystem));
+        mChooser.addOption("Test Path", new FollowPath(Paths.TestPath, mDrivetrainSubsystem));
+        mChooser.addOption("Test Path 2", new FollowPath(Paths.TestPath2, mDrivetrainSubsystem));
 
         
     }
