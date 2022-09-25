@@ -108,7 +108,9 @@ public class Drive extends CommandBase {
 
         double roationSpeed = mTurnPID.calculate(error, 0);
 
-        roationSpeed = MathUtil.clamp(roationSpeed, -DRIVETRAIN.MAX_TURN_SPEED, DRIVETRAIN.MAX_TURN_SPEED);
+        roationSpeed = mFieldOriented
+                ? MathUtil.clamp(roationSpeed, -DRIVETRAIN.MAX_TURN_SPEED, DRIVETRAIN.MAX_TURN_SPEED)
+                : roatationSpeed;
 
         roatationSpeed = applyDeadband(roatationSpeed, 0.05);
 

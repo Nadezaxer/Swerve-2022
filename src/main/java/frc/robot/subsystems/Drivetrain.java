@@ -1,9 +1,10 @@
 package frc.robot.subsystems;
 
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.ADXRS450_Gyro;
-import edu.wpi.first.wpilibj.interfaces.Gyro;
 import edu.wpi.first.wpilibj2.command.Subsystem;
+
+import com.ctre.phoenix.sensors.Pigeon2;
+
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -14,6 +15,7 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInLayouts;
 import frc.robot.Constants.DRIVETRAIN;
 import frc.robot.Constants.HARDWARE;
@@ -53,7 +55,7 @@ public class Drivetrain implements Subsystem, UpdateManager.Updatable {
     private final SwerveModule[] mModules;
     private final SwerveDriveKinematics mDriveKinematics;
     private final SwerveDriveOdometry mOdometry;
-    private final Gyro mGyro;
+    private final Pigeon2 mGyro;
     private SwerveModuleState[] mSwerveModuleStates = { new SwerveModuleState(), new SwerveModuleState(),
             new SwerveModuleState(), new SwerveModuleState() };
     private double[] mHomes = new double[] { 0, 0, 0, 0 };
@@ -117,16 +119,15 @@ public class Drivetrain implements Subsystem, UpdateManager.Updatable {
     }
 
     public synchronized void setPose(Pose2d pose) {
-        mGyro.calibrate();
-        mOdometry.resetPosition(pose, mGyro.getRotation2d());
+        mOdometry.resetPosition(pose, GetGyroHeading());
     }
 
 
     public synchronized void resetHeading() {
-        mGyro.reset();
+        mGyro.setYaw(0);
         Translation2d currentTranslation = mOdometry.getPoseMeters().getTranslation();
 
-        mOdometry.resetPosition(new Pose2d(currentTranslation, new Rotation2d()), mGyro.getRotation2d());
+        mOdometry.resetPosition(new Pose2d(currentTranslation, new Rotation2d()), GetGyroHeading());
     }
 
     // -------------------------------------------------------------------------------------------//
@@ -146,7 +147,7 @@ public class Drivetrain implements Subsystem, UpdateManager.Updatable {
     }
 
     private Rotation2d GetGyroHeading() {
-        return mGyro.getRotation2d();
+        return Rotation2d.fromDegrees(mGyro.getYaw());
     }
 
     private synchronized void UpdateOdometry(double time) {
@@ -235,7 +236,7 @@ public class Drivetrain implements Subsystem, UpdateManager.Updatable {
                 DRIVETRAIN.REAR_LEFT_LOCATION,
                 DRIVETRAIN.REAR_RIGHT_LOCATION);
         mOdometry = new SwerveDriveOdometry(mDriveKinematics, new Rotation2d(0.0));
-        mGyro = new ADXRS450_Gyro();
+        mGyro = new Pigeon2(HARDWARE.PIGEON2);
         mOdometryXEntry = tab.add("X", 0.0)
                 .withPosition(0, 0)
                 .withSize(1, 1)
@@ -272,6 +273,7 @@ public class Drivetrain implements Subsystem, UpdateManager.Updatable {
         mOdometryXEntry.setDouble(pose.getX());
         mOdometryYEntry.setDouble(pose.getY());
         mOdometryHeadingEntry.setDouble(pose.getRotation().getDegrees());
+        SmartDashboard.putNumber("Gyro: Degryes", mGyro.getYaw());
         mStateEntry.setString(GetState().toString());
 
     }

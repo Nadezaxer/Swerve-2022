@@ -36,6 +36,7 @@ public final class Constants {
         public static final int LEFT_JOYSTICK = 0;                              // Left joystick port number
         public static final int RIGHT_JOYSTICK = 1;                             // Right joystick port number
         public static final int DRIVER_BUTTON_BOARD = 2;                        // Drive button controller port number
+        public static final int PIGEON2 = 6;
 
 
     }
@@ -101,7 +102,7 @@ public final class Constants {
     public static final class DRIVER {
         public static final double MAX_DRIVE_VELOCITY = 8;                // The maximum drive velocity
         public static final double MAX_ROTATION_VELOCITY = 1 * Math.PI;              // The maximum drive rotation velocity in rad / sec
-        public static final double JOYSTICK_DEADBAND = 0.05;                    // The joystick deadband
+        public static final double JOYSTICK_DEADBAND = 0.15;                    // The joystick deadband
         public static final int DRIVE_SLEW_RATE_LIMITER = 3;                    // The units per second max change
     }
 
